@@ -29,8 +29,8 @@ def login():
     if response.status_code == 200:
         r = json.loads(response.text)
         print("登录成功，登录用户：{0}, token={1}".format(r['account'], token))
-        load_history_records(token)
-        # load_today_records(token)
+        # load_history_records(token)
+        load_today_records(token)
     else:
         print("登录失败: {0}".format(response.status_code))
 
@@ -75,9 +75,9 @@ def today_list(token, page):
         # betInfo, oddsName 下注号码
         for item in r['data']:
             today_record_file.write(
-                "{0}, {1}, {2}, {3}, {4}, {5}, {6}\n".format(item['betStartTime'], item['betEndTime'], item['addTime'],
-                                                             item['betInfo'], item['openNum'], item['totalMoney'],
-                                                             item['reward'])
+                "{0}, {1}, {2}, {3}, {4}\n".format(item['turnNum'],
+                                                        item['betInfo'], item['openNum'], item['totalMoney'],
+                                                        item['reward'])
             )
     else:
         print("加载投注记录失败：{0}".format(response.status_code))
@@ -103,13 +103,13 @@ def history_list(token, page, date):
         # reward 奖金
         # openNum 开彩号码
         # betInfo, oddsName 下注号码
+        # turnNum, 20210801158, 期号
         for item in r['data']:
             history_record_file.write(
-                "{0}, {1}, {2}, {3}, {4}, {5}, {6}\n".format(item['betStartTime'], item['betEndTime'], item['addTime'],
-                                                             item['betInfo'], item['openNum'], item['totalMoney'],
-                                                             item['reward'])
+                "{0}, {1}, {2}, {3}, {4}\n".format(item['turnNum'],
+                                                        item['betInfo'], item['openNum'], item['totalMoney'],
+                                                        item['reward'])
             )
-        print("write page {0}".format(page))
     else:
         print("加载投注记录失败：{0}".format(response.status_code))
 
