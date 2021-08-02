@@ -23,11 +23,7 @@ def login(username, pwd):
         'password': password
     }
     print("登录九州国际：{0}, {1}".format(username, password))
-    session = req.Session()
     response = req.post(URL_LOGIN, data=data)
-    # print("cookies: ${0}".format(response.cookies.get_dict()['token']))
-
-    token = ""
     if username == "rabbit":
         g.main_token = response.cookies.get_dict()['token']
         token = g.main_token
@@ -120,12 +116,12 @@ def history_list(page, date):
         print("加载投注记录失败：{0}".format(response.status_code))
 
 
-def test():
-    f = open("js/md5.js", "r")
-    context.execute(f.read())
-    password = context.hex_md5("night123")
-    print(random.random())
-    print(password)
-
-
-test()
+# def test():
+#     f = open("js/md5.js", "r")
+#     context.execute(f.read())
+#     password = context.hex_md5("night123")
+#     print(random.random())
+#     print(password)
+#
+#
+# test()
