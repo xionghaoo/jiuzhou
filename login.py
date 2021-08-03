@@ -22,17 +22,15 @@ def login(username, pwd):
         'account': username,
         'password': password
     }
-    print("登录九州国际：{0}, {1}".format(username, password))
+    print("登录九州国际：{0}, {1}".format(username, pwd))
     response = req.post(URL_LOGIN, data=data)
     if username == "rabbit":
         g.main_token = response.cookies.get_dict()['token']
-        token = g.main_token
     else:
         g.bet_token = response.cookies.get_dict()['token']
-        token = g.bet_token
     if response.status_code == 200:
         r = json.loads(response.text)
-        print("登录成功，登录用户：{0}, token={1}".format(r['account'], token))
+        print("登录成功，登录用户：{0}".format(r['account']))
     else:
         print("登录失败: {0}".format(response.status_code))
 

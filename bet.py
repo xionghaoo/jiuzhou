@@ -5,9 +5,18 @@ import login
 import requests as req
 import static_value as g
 import schedule
+from datetime import datetime
 
 URL_BET = "http://9757928.com/api/bet"
 URL_OPEN_INFO = "http://9757928.com/v/lottery/openInfo"
+
+
+def parse_date(s):
+    # 2021-08-03 10:55:02
+    date_s, time_s = s.split(' ')
+    year_s, mon_s, day_s = date_s.split('-')
+    hour_s, minute_s, second_s = time_s.split(':')
+    return datetime(int(year_s), int(mon_s), int(day_s), int(hour_s), int(minute_s), int(second_s))
 
 
 # 获取当前下注期数
@@ -58,9 +67,9 @@ def bet(turn_num, cate_list):
     }
     bet_res = req.post(URL_BET, json=data, headers=headers, cookies={'token': g.bet_token})
     if bet_res.status_code == 200:
-        print("投注成功: {0}".format(bet_res.text))
+        print("投注成功: {0}\n".format(bet_res.text))
     else:
-        print("投注失败: {0}, {1}".format(bet_res.status_code, bet_res.text))
+        print("投注失败: {0}, {1}\n".format(bet_res.status_code, bet_res.text))
 
 
 def get_unopen_list():
@@ -83,22 +92,27 @@ def get_unopen_list():
         # openNum 开彩号码
         # betInfo, oddsName 下注号码
         # 投注
-
+        log_data = []
         cate_list = []
         for item in r['data']:
-            cate_list.append({
-                "code": item['cateCode'],
-                "betInfo": item['betInfo'],
-                "odds": item['odds'],
-                "money": item['money'],
-                "betModel": item['betModel'],
-                "rebate": item['rebate'],
-                "multiple": str(item['multiple']),
-                "totalMoney": str(item['totalMoney']),
-                "totalNums": item['totalNums'],
-                "cateName": item['cateName'],
-            })
-        print("未开奖列表：{}".format(cate_list))
+            start_time = parse_date(item['betStartTime'])
+            now_time = datetime.now()
+            # 当天期数开始时间在四分钟内，正常应该是两分钟左右，确保是本期的投注
+            if (now_time - start_time).seconds < 4 * 60:
+                cate_list.append({
+                    "code": item['cateCode'],
+                    "betInfo": item['betInfo'],
+                    "odds": item['odds'],
+                    "money": item['money'],
+                    "betModel": item['betModel'],
+                    "rebate": item['rebate'],
+                    "multiple": str(item['multiple']),
+                    "totalMoney": str(item['totalMoney']),
+                    "totalNums": item['totalNums'],
+                    "cateName": item['cateName'],
+                })
+                log_data.append({'betInfo': item['betInfo'], 'money': item['money']})
+        print("本期投注：{}".format(log_data))
         return cate_list
     else:
         print("get_unopen_list：{0}".format(res.status_code))
@@ -106,18 +120,24 @@ def get_unopen_list():
 
 # 自动根据主账号投注
 def bet_start():
-    print("bet task run at {}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+    print("---------------------------bet task run at {}---------------------------".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+    # 登录投注账号
     login.login(username="night123", pwd="night123")
+    # 获取本期投注期数
     turn_num = open_info()
+    # 登录主账号
     login.login(username="rabbit", pwd="rabbit")
+    # 获取主账号投注单
     cate_list = get_unopen_list()
     if len(cate_list) > 0:
+        # 投注账号下单
         bet(turn_num, cate_list)
     else:
-        print("主账号未投注")
+        print("主账号未投注\n")
 
 
-# bet_start()
+bet_start()
+
 
 def test_task():
     # 格式化成2016-03-20 11:45:39形式
@@ -125,16 +145,26 @@ def test_task():
 
 
 def auto_task():
-    for hour in range(11, 14):
+    for hour in range(13, 20):
         for minute in range(0, 6):
-            # print("time: {0}:{1}3".format(hour, minute))
-            schedule.every().day.at("{0}:{1}3".format(hour, minute)).do(test_task)
-            # print("time: {0}:{1}7".format(hour, minute))
-            schedule.every().day.at("{0}:{1}7".format(hour, minute)).do(test_task)
-    print("start time task...")
+            schedule.every().day.at("{0}:{1}2".format(hour, minute)).do(bet_start)
+            schedule.every().day.at("{0}:{1}7".format(hour, minute)).do(bet_start)
+    print("start bet task...")
     while True:
         schedule.run_pending()
         time.sleep(1)
 
 
-auto_task()
+# auto_task()
+
+
+def test():
+    # login.login(username="rabbit", pwd="rabbit")
+    # cate_list = get_unopen_list()
+    # date = datetime.strptime("2012-09-20", '%Y-%m-%d')
+    date = parse_date("2021-08-03 10:55:02")
+    now = datetime.now()
+    print((now - date).seconds)
+
+
+# test()
