@@ -35,13 +35,7 @@ def login(username, pwd):
         print("登录失败: {0}".format(response.status_code))
 
 
-def load_today_records():
-    global today_record_file
-    today_record_file = open("today_order_records.txt", "w")
-    for i in range(1, 24):
-        print('load page {}'.format(i))
-        # 今天投注记录
-        today_list(g.main_token, i)
+
 
 
 def load_history_records():
@@ -53,34 +47,6 @@ def load_history_records():
             print('load page {}'.format(i))
             # 今天投注记录
             history_list(g.main_token, i, date)
-
-
-def today_list(page, status):
-    params = {
-        'page': page,
-        'rows': 10,
-        "gameId": "",
-        "status": status
-    }
-    response = req.get(URL_TODAY_LIST, params=params, cookies={'token': g.main_token})
-    if response.status_code == 200:
-        r = json.loads(response.text)
-        # addTime 投注时间
-        # betStartTime 每期开始时间
-        # betEndTime 每期结束时间
-        # orderNo 订单号
-        # totalMoney 投注金额
-        # reward 奖金
-        # openNum 开彩号码
-        # betInfo, oddsName 下注号码
-        for item in r['data']:
-            today_record_file.write(
-                "{0}, {1}, {2}, {3}, {4}\n".format(item['turnNum'],
-                                                        item['betInfo'], item['openNum'], item['totalMoney'],
-                                                        item['reward'])
-            )
-    else:
-        print("加载投注记录失败：{0}".format(response.status_code))
 
 
 def history_list(page, date):
