@@ -1,8 +1,10 @@
 import json
+import time
 
 import login
 import requests as req
 import static_value as g
+import schedule
 
 URL_BET = "http://9757928.com/api/bet"
 URL_OPEN_INFO = "http://9757928.com/v/lottery/openInfo"
@@ -104,6 +106,7 @@ def get_unopen_list():
 
 # 自动根据主账号投注
 def bet_start():
+    print("bet task run at {}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
     login.login(username="night123", pwd="night123")
     turn_num = open_info()
     login.login(username="rabbit", pwd="rabbit")
@@ -114,4 +117,24 @@ def bet_start():
         print("主账号未投注")
 
 
-bet_start()
+# bet_start()
+
+def test_task():
+    # 格式化成2016-03-20 11:45:39形式
+    print("do task at {}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+
+
+def auto_task():
+    for hour in range(11, 14):
+        for minute in range(0, 6):
+            # print("time: {0}:{1}3".format(hour, minute))
+            schedule.every().day.at("{0}:{1}3".format(hour, minute)).do(test_task)
+            # print("time: {0}:{1}7".format(hour, minute))
+            schedule.every().day.at("{0}:{1}7".format(hour, minute)).do(test_task)
+    print("start time task...")
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+
+auto_task()
