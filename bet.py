@@ -8,7 +8,7 @@ import schedule
 import js2py
 from datetime import datetime
 
-ZOOM = 1.5
+ZOOM = 3
 URL_BET = "http://9757928.com/api/bet"
 URL_OPEN_INFO = "http://9757928.com/v/lottery/openInfo"
 
