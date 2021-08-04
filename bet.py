@@ -5,10 +5,36 @@ import login
 import requests as req
 import static_value as g
 import schedule
+import js2py
 from datetime import datetime
 
+ZOOM = 1.5
 URL_BET = "http://9757928.com/api/bet"
 URL_OPEN_INFO = "http://9757928.com/v/lottery/openInfo"
+
+context = js2py.EvalJs()
+
+
+# 号码赔率映射关系
+odd_map = {
+    '3': '42',
+    '4': '42',
+    '5': '21',
+    '6': '21',
+    '7': '14',
+    '8': '14',
+    '9': '10.5',
+    '10': '10.5',
+    '11': '8.4',
+    '12': '10.5',
+    '13': '10.5',
+    '14': '14',
+    '15': '14',
+    '16': '21',
+    '17': '21',
+    '18': '42',
+    '19': '42',
+}
 
 
 def parse_date(s):
@@ -17,6 +43,12 @@ def parse_date(s):
     year_s, mon_s, day_s = date_s.split('-')
     hour_s, minute_s, second_s = time_s.split(':')
     return datetime(int(year_s), int(mon_s), int(day_s), int(hour_s), int(minute_s), int(second_s))
+
+
+def get_bet_data(money, data_odds):
+    f = open("js/my_bet.js", "r", encoding='utf-8')
+    context.execute(f.read())
+    return context.getBetOdds(money, data_odds)
 
 
 # 获取当前下注期数
@@ -91,6 +123,7 @@ def get_unopen_list():
         # reward 奖金
         # openNum 开彩号码
         # betInfo, oddsName 下注号码
+        # oddsName 赔率
         # 投注
         log_data = []
         cate_list = []
@@ -99,19 +132,22 @@ def get_unopen_list():
             now_time = datetime.now()
             # 当天期数开始时间在四分钟内，正常应该是两分钟左右，确保是本期的投注
             if (now_time - start_time).seconds < 4 * 60:
+                bet_money = round(item['totalMoney'] * ZOOM, 2)
+                bet_number = item['betInfo']
+                bet_data = get_bet_data(bet_money, odd_map[bet_number])
                 cate_list.append({
                     "code": item['cateCode'],
-                    "betInfo": item['betInfo'],
-                    "odds": item['odds'],
-                    "money": item['money'],
-                    "betModel": item['betModel'],
+                    "betInfo": bet_number,
+                    "odds": bet_data['odds'],  # 赔率金额 可能会修改
+                    "money": float(bet_data['money']),  # 金额最小单位
+                    "betModel": int(bet_data['betModel']),  # 金额小数点 可能会修改
                     "rebate": item['rebate'],
-                    "multiple": str(item['multiple']),
-                    "totalMoney": str(item['totalMoney']),
+                    "multiple": bet_data['multiple'],  # 修改
+                    "totalMoney": str(bet_money),  # 修改
                     "totalNums": item['totalNums'],
                     "cateName": item['cateName'],
                 })
-                log_data.append({'betInfo': item['betInfo'], 'money': item['money']})
+                log_data.append({'betInfo': item['betInfo'], 'money': bet_money})
         print("本期投注：{}".format(log_data))
         return cate_list
     else:
@@ -120,7 +156,8 @@ def get_unopen_list():
 
 # 自动根据主账号投注
 def bet_start():
-    print("---------------------------bet task run at {}---------------------------".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+    print("---------------------------bet task run at {}---------------------------".format(
+        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
     # 登录投注账号
     login.login(username="night123", pwd="night123")
     # 获取本期投注期数
@@ -136,16 +173,8 @@ def bet_start():
         print("主账号未投注\n")
 
 
-bet_start()
-
-
-def test_task():
-    # 格式化成2016-03-20 11:45:39形式
-    print("do task at {}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-
-
 def auto_task():
-    for hour in range(13, 20):
+    for hour in range(11, 15):
         for minute in range(0, 6):
             schedule.every().day.at("{0}:{1}2".format(hour, minute)).do(bet_start)
             schedule.every().day.at("{0}:{1}7".format(hour, minute)).do(bet_start)
@@ -155,16 +184,10 @@ def auto_task():
         time.sleep(1)
 
 
-# auto_task()
-
-
 def test():
-    # login.login(username="rabbit", pwd="rabbit")
-    # cate_list = get_unopen_list()
-    # date = datetime.strptime("2012-09-20", '%Y-%m-%d')
-    date = parse_date("2021-08-03 10:55:02")
-    now = datetime.now()
-    print((now - date).seconds)
+    print(round(0.02*2.5, 2))
 
 
+auto_task()
+# bet_start()
 # test()
